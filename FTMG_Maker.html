@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pixel Art Drawing</title>
+        <style>
+            #grid {
+                display: grid;
+                gap: 1px;
+            }
+
+            .cell {
+                width: 20px;
+                height: 20px;
+                background-color: #fff;
+                border: 1px solid #ccc;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>FTMG Image Maker</h1>
+        <label for="gridSize">Grid Size:</label>
+        <input type="number" id="gridSize" value="16" min="1" max="64">
+        <button onclick="resizeGrid()">Resize</button>
+        <br>
+        <label for="colorPicker">Select Color:</label>
+        <input type="color" id="colorPicker" value="#000000">
+        <br>
+        <button id="export" onclick="exportImage()">Export</button>
+        <input id="InputTitle" placeholder="TitleHere">
+        <div id="grid"></div>
+
+        <script>
+            var selectedColor = '#000000';
+
+            var canvasSize = 16;
+
+            function createGrid(size) {
+                canvasSize = size;
+                const grid = document.getElementById('grid');
+                grid.innerHTML = '';
+                grid.style.gridTemplateColumns = `repeat(${size}, 20px)`;
+                grid.style.gridTemplateRows = `repeat(${size}, 20px)`;
+
+                for (var i = 0; i < size * size; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.setAttribute("id", `${i}`);
+                    cell.addEventListener('click', () => {
+                        // console.log(selectedColor);
+                        cell.style.backgroundColor = selectedColor;
+                    });
+                    cell.addEventListener('contextmenu', function (e) {
+                        e.preventDefault();
+                        cell.style.backgroundColor = ''
+                    })
+                    grid.appendChild(cell);
+                }
+            }
+
+            function resizeGrid() {
+                const size = document.getElementById('gridSize').value;
+                createGrid(size);
+            }
+
+            document.getElementById('colorPicker').addEventListener('input', (event) => {
+                selectedColor = event.target.value;
+            });
+
+            createGrid(canvasSize);
+
+            function toHex(rgbVal) {
+                const values = rgbVal.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+
+                if (!values) return `0xffffff`;
+
+                const r = parseInt(values[1], 10);
+                const g = parseInt(values[2], 10);
+                const b = parseInt(values[3], 10);
+
+                // console.log(r + ", " + g + ", " + b + ", ")
+
+                const fullHex = (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1);
+
+                return `0x${fullHex}`;
+            }
+
+            function exportImage() {
+                var imageData = "#IMG_TYPE FTMG";
+                for (var i = 0; i < canvasSize * canvasSize; ++i) {
+                    if (i % canvasSize == 0) imageData += "\n";
+                    var currentColor = document.getElementById(`${i}`).style.backgroundColor;
+                    imageData += `${toHex(currentColor)},`;
+                }
+                var title = document.getElementById("InputTitle").value;
+                if (title == "") {
+                    title = "Unnamed.ftmg";
+                } else {
+                    title += ".ftmg";
+                }
+                const blob = new Blob([imageData], { type: "text/plain" });
+                const outFile = new File([blob], title, { type: "text/plain" });
+
+                const link = document.createElement("a");
+                link.setAttribute("target", "_blank");
+                link.href = URL.createObjectURL(outFile);
+                link.download = title;
+
+                document.body.append(link);
+                link.click();
+                document.body.remove(link);
+            }
+        </script>
+    </body>
+</html>
